@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intl / Timezone Fingerprint</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 24px; background: #f6f7fb; color: #111; }
+    button { padding: 10px 16px; border: 0; border-radius: 8px; background: #0f766e; color: white; cursor: pointer; font-size: 14px; }
+    #result { margin-top: 16px; padding: 12px; background: white; border: 1px solid #dbe2ea; border-radius: 8px; white-space: pre-wrap; word-break: break-all; }
+    .section { margin-top: 12px; }
+    .label { font-weight: 700; margin-bottom: 6px; }
+    pre { margin: 0; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; white-space: pre-wrap; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <h1>Intl / Timezone Fingerprint</h1>
+  <button id="btn">Yenile</button>
+  <div id="result">Henüz oluşturulmadı.</div>
+
+  <script>
+    function hashString(text) {
+      let hash = 0;
+      for (let i = 0; i < text.length; i++) {
+        hash = ((hash << 5) - hash) + text.charCodeAt(i);
+        hash |= 0;
+      }
+      return String(hash);
+    }
+
+    function getIntlFingerprint() {
+      const now = new Date();
+      const options = new Intl.DateTimeFormat().resolvedOptions();
+      const data = {
+        locale: options.locale,
+        calendar: options.calendar,
+        numberingSystem: options.numberingSystem,
+        timeZone: options.timeZone,
+        timeZoneName: options.timeZoneName || null,
+        dateString: now.toString(),
+        utcString: now.toUTCString(),
+        isoString: now.toISOString(),
+        timezoneOffsetMinutes: now.getTimezoneOffset(),
+        formattedDate: new Intl.DateTimeFormat(undefined, {
+          dateStyle: 'full',
+          timeStyle: 'long'
+        }).format(now)
+      };
+
+      const raw = JSON.stringify(data, null, 2);
+      return { raw, hash: hashString(raw) };
+    }
+
+    function renderIntlFingerprint() {
+      const fingerprint = getIntlFingerprint();
+      document.getElementById('result').innerHTML = `
+        <div class="section">
+          <div class="label">Hashli veri</div>
+          <pre>${fingerprint.hash}</pre>
+        </div>
+        <div class="section">
+          <div class="label">Ham veri</div>
+          <pre>${fingerprint.raw}</pre>
+        </div>
+      `;
+    }
+
+    document.getElementById('btn').addEventListener('click', renderIntlFingerprint);
+    renderIntlFingerprint();
+  </script>
+</body>
+</html>
