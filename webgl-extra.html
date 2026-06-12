@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebGL Extra Fingerprint</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 24px; background: #f4f7fb; color: #111; }
+    button { padding: 10px 16px; border: 0; border-radius: 8px; background: #0f766e; color: white; cursor: pointer; font-size: 14px; }
+    #result { margin-top: 16px; padding: 12px; background: white; border: 1px solid #d6dde6; border-radius: 8px; white-space: pre-wrap; word-break: break-all; }
+    .section { margin-top: 12px; }
+    .label { font-weight: 700; margin-bottom: 6px; }
+    pre { margin: 0; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; white-space: pre-wrap; word-break: break-all; }
+    canvas { display: none; }
+  </style>
+</head>
+<body>
+  <h1>WebGL Extra Fingerprint</h1>
+  <button id="btn">Yenile</button>
+  <div id="result">Henüz oluşturulmadı.</div>
+  <canvas id="glCanvas" width="1" height="1"></canvas>
+
+  <script>
+    function hashString(text) {
+      let hash = 0;
+      for (let i = 0; i < text.length; i++) {
+        hash = ((hash << 5) - hash) + text.charCodeAt(i);
+        hash |= 0;
+      }
+      return String(hash);
+    }
+
+    function getWebGLInfo() {
+      const canvas = document.getElementById('glCanvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (!gl) {
+        return { supported: false, error: 'WebGL desteklenmiyor' };
+      }
+
+      const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+      const parameterNames = [
+        'VENDOR', 'RENDERER', 'VERSION', 'SHADING_LANGUAGE_VERSION',
+        'MAX_TEXTURE_SIZE', 'MAX_VIEWPORT_DIMS', 'ALIASED_LINE_WIDTH_RANGE',
+        'ALIASED_POINT_SIZE_RANGE', 'RED_BITS', 'GREEN_BITS', 'BLUE_BITS',
+        'ALPHA_BITS', 'DEPTH_BITS', 'STENCIL_BITS', 'MAX_RENDERBUFFER_SIZE',
+        'MAX_VERTEX_ATTRIBS', 'MAX_VERTEX_UNIFORM_VECTORS', 'MAX_VARYING_VECTORS',
+        'MAX_FRAGMENT_UNIFORM_VECTORS', 'MAX_COMBINED_TEXTURE_IMAGE_UNITS',
+        'MAX_CUBE_MAP_TEXTURE_SIZE', 'SAMPLE_BUFFERS', 'SAMPLES', 'SUBPIXEL_BITS'
+      ];
+
+      const values = {};
+      for (const name of parameterNames) {
+        const key = gl[name];
+        values[name] = typeof key !== 'undefined' ? gl.getParameter(key) : null;
+      }
+
+      if (debugInfo) {
+        values.UNMASKED_VENDOR_WEBGL = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+        values.UNMASKED_RENDERER_WEBGL = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+      }
+
+      const supportedExtensions = gl.getSupportedExtensions() || [];
+      const precisions = {
+        fragmentHighFloat: gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT),
+        fragmentMediumFloat: gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.MEDIUM_FLOAT),
+        fragmentLowFloat: gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.LOW_FLOAT),
+        vertexHighFloat: gl.getShaderPrecisionFormat(gl.VERTEX_SHADER, gl.HIGH_FLOAT),
+        vertexMediumFloat: gl.getShaderPrecisionFormat(gl.VERTEX_SHADER, gl.MEDIUM_FLOAT),
+        vertexLowFloat: gl.getShaderPrecisionFormat(gl.VERTEX_SHADER, gl.LOW_FLOAT)
+      };
+
+      return {
+        supported: true,
+        values,
+        supportedExtensions,
+        precisions
+      };
+    }
+
+    function getWebGLExtraFingerprint() {
+      const data = getWebGLInfo();
+      const raw = JSON.stringify(data, null, 2);
+      return { raw, hash: hashString(raw) };
+    }
+
+    function renderWebGLExtraFingerprint() {
+      const fingerprint = getWebGLExtraFingerprint();
+      document.getElementById('result').innerHTML = `
+        <div class="section">
+          <div class="label">Hashli veri</div>
+          <pre>${fingerprint.hash}</pre>
+        </div>
+        <div class="section">
+          <div class="label">Ham veri</div>
+          <pre>${fingerprint.raw}</pre>
+        </div>
+      `;
+    }
+
+    document.getElementById('btn').addEventListener('click', renderWebGLExtraFingerprint);
+    renderWebGLExtraFingerprint();
+  </script>
+</body>
+</html>

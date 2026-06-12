@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Performance & Timing Fingerprint</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 24px; background: #f6f7fb; color: #111; }
+    button { padding: 10px 16px; border: 0; border-radius: 8px; background: #2563eb; color: white; cursor: pointer; font-size: 14px; }
+    #result { margin-top: 16px; padding: 12px; background: white; border: 1px solid #dbe2ea; border-radius: 8px; white-space: pre-wrap; word-break: break-all; }
+    .section { margin-top: 12px; }
+    .label { font-weight: 700; margin-bottom: 6px; }
+    pre { margin: 0; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; white-space: pre-wrap; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <h1>Performance & Timing Fingerprint</h1>
+  <button id="btn">Yenile</button>
+  <div id="result">Henüz oluşturulmadı.</div>
+
+  <script>
+    function hashString(text) {
+      let hash = 0;
+      for (let i = 0; i < text.length; i++) {
+        hash = ((hash << 5) - hash) + text.charCodeAt(i);
+        hash |= 0;
+      }
+      return String(hash);
+    }
+
+    function runCpuBenchmark() {
+      const start = performance.now();
+      let acc = 0;
+      for (let i = 0; i < 5000000; i++) {
+        acc += Math.sin(i) * Math.tan(i % 1000);
+      }
+      const end = performance.now();
+      return {
+        elapsedMs: Number((end - start).toFixed(4)),
+        accumulator: Number(acc.toFixed(6))
+      };
+    }
+
+    function getMathPrecision() {
+      const values = [
+        Math.sin(0.1),
+        Math.sin(0.2),
+        Math.sin(1.23456789),
+        Math.tan(0.1),
+        Math.tan(0.2),
+        Math.tan(1.23456789),
+        Math.sqrt(2),
+        Math.log(10)
+      ];
+      return values.map((value) => Number(value.toPrecision(17)));
+    }
+
+    function getPerformanceFingerprint() {
+      const data = {
+        timeOrigin: performance.timeOrigin,
+        now: performance.now(),
+        memory: performance.memory ? {
+          jsHeapSizeLimit: performance.memory.jsHeapSizeLimit,
+          totalJSHeapSize: performance.memory.totalJSHeapSize,
+          usedJSHeapSize: performance.memory.usedJSHeapSize
+        } : null,
+        navigationStart: performance.timing ? performance.timing.navigationStart : null,
+        benchmark: runCpuBenchmark(),
+        mathPrecision: getMathPrecision(),
+        devicePixelRatio: window.devicePixelRatio
+      };
+      const raw = JSON.stringify(data, null, 2);
+      return { raw, hash: hashString(raw) };
+    }
+
+    function renderPerformanceFingerprint() {
+      const fingerprint = getPerformanceFingerprint();
+      document.getElementById('result').innerHTML = `
+        <div class="section">
+          <div class="label">Hashli veri</div>
+          <pre>${fingerprint.hash}</pre>
+        </div>
+        <div class="section">
+          <div class="label">Ham veri</div>
+          <pre>${fingerprint.raw}</pre>
+        </div>
+      `;
+    }
+
+    document.getElementById('btn').addEventListener('click', renderPerformanceFingerprint);
+    renderPerformanceFingerprint();
+  </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Server-Side Fingerprint Notu</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 24px; background: #f6f7fb; color: #111; }
+    .card { max-width: 760px; background: white; border: 1px solid #dbe2ea; border-radius: 12px; padding: 18px; margin-top: 16px; }
+    pre { margin: 0; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; white-space: pre-wrap; word-break: break-word; }
+  </style>
+</head>
+<body>
+  <h1>Server-Side Fingerprint Notu</h1>
+  <div class="card">
+    <p>Bu dosya, tarayıcı içinden doğrudan alınamayan fingerprint sinyallerini açıklar.</p>
+    <pre>
+TLS fingerprint (JA3/JA4)
+HTTP/2 SETTINGS frame
+Header sırası ve HTTP değerleri
+TCP/IP özellikleri (TTL, window size vb.)
+    </pre>
+    <p>Bu veriler JavaScript ile statik HTML sayfasından güvenilir biçimde alınamaz. Bunlar için sunucu tarafında proxy, reverse proxy, CDN logları veya özel bir backend gerekir.</p>
+  </div>
+</body>
+</html>

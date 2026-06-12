@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSS & Rendering Fingerprint</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 24px; background: #f6f7fb; color: #111; }
+    button { padding: 10px 16px; border: 0; border-radius: 8px; background: #7c3aed; color: white; cursor: pointer; font-size: 14px; }
+    #result { margin-top: 16px; padding: 12px; background: white; border: 1px solid #dbe2ea; border-radius: 8px; white-space: pre-wrap; word-break: break-all; }
+    .section { margin-top: 12px; }
+    .label { font-weight: 700; margin-bottom: 6px; }
+    pre { margin: 0; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; white-space: pre-wrap; word-break: break-all; }
+    .probe { position: absolute; left: -9999px; top: -9999px; width: 160px; height: 160px; overflow: scroll; }
+    .probe-inner { width: 260px; height: 260px; }
+    .defaults { margin-top: 12px; }
+    .defaults * { all: revert; }
+  </style>
+</head>
+<body>
+  <h1>CSS & Rendering Fingerprint</h1>
+  <button id="btn">Yenile</button>
+  <div id="result">Henüz oluşturulmadı.</div>
+  <div class="probe" id="probe"><div class="probe-inner"></div></div>
+  <div class="defaults" id="defaults">
+    <h2>Default Heading</h2>
+    <p>Default paragraph</p>
+    <ul><li>Item 1</li><li>Item 2</li></ul>
+  </div>
+
+  <script>
+    function hashString(text) {
+      let hash = 0;
+      for (let i = 0; i < text.length; i++) {
+        hash = ((hash << 5) - hash) + text.charCodeAt(i);
+        hash |= 0;
+      }
+      return String(hash);
+    }
+
+    function probeScrollbarWidth() {
+      const probe = document.getElementById('probe');
+      return {
+        offsetWidth: probe.offsetWidth,
+        clientWidth: probe.clientWidth,
+        scrollbarWidth: probe.offsetWidth - probe.clientWidth
+      };
+    }
+
+    function getComputedDefaults() {
+      const defaults = document.getElementById('defaults');
+      const heading = defaults.querySelector('h2');
+      const paragraph = defaults.querySelector('p');
+      const list = defaults.querySelector('ul');
+      return {
+        h2: getComputedStyle(heading),
+        p: getComputedStyle(paragraph),
+        ul: getComputedStyle(list)
+      };
+    }
+
+    function getCssSupports() {
+      const tests = [
+        ['selector(:has(*))', CSS.supports('selector(:has(*))')],
+        ['display: grid', CSS.supports('display', 'grid')],
+        ['display: subgrid', CSS.supports('display', 'subgrid')],
+        ['position: sticky', CSS.supports('position', 'sticky')],
+        ['backdrop-filter: blur(4px)', CSS.supports('backdrop-filter', 'blur(4px)')],
+        ['scrollbar-gutter: stable', CSS.supports('scrollbar-gutter', 'stable')],
+        ['font-tech(color-COLRv1)', CSS.supports('font-tech(color-COLRv1)')],
+        ['touch-action: manipulation', CSS.supports('touch-action', 'manipulation')],
+        ['contain-intrinsic-size: 100px', CSS.supports('contain-intrinsic-size', '100px')]
+      ];
+      return tests.map(([feature, supported]) => ({ feature, supported }));
+    }
+
+    function getCssRenderingFingerprint() {
+      const bodyStyle = getComputedStyle(document.body);
+      const data = {
+        cssSupports: getCssSupports(),
+        scrollbar: probeScrollbarWidth(),
+        computedBody: {
+          margin: bodyStyle.margin,
+          padding: bodyStyle.padding,
+          fontFamily: bodyStyle.fontFamily,
+          lineHeight: bodyStyle.lineHeight,
+          color: bodyStyle.color,
+          backgroundColor: bodyStyle.backgroundColor
+        },
+        computedDefaults: (() => {
+          const defaults = document.getElementById('defaults');
+          const heading = defaults.querySelector('h2');
+          const paragraph = defaults.querySelector('p');
+          const list = defaults.querySelector('ul');
+          const headingStyle = getComputedStyle(heading);
+          const paragraphStyle = getComputedStyle(paragraph);
+          const listStyle = getComputedStyle(list);
+          return {
+            h2: {
+              marginTop: headingStyle.marginTop,
+              marginBottom: headingStyle.marginBottom,
+              fontSize: headingStyle.fontSize,
+              fontWeight: headingStyle.fontWeight,
+              lineHeight: headingStyle.lineHeight
+            },
+            p: {
+              marginTop: paragraphStyle.marginTop,
+              marginBottom: paragraphStyle.marginBottom,
+              fontSize: paragraphStyle.fontSize,
+              lineHeight: paragraphStyle.lineHeight
+            },
+            ul: {
+              marginTop: listStyle.marginTop,
+              marginBottom: listStyle.marginBottom,
+              paddingLeft: listStyle.paddingLeft,
+              listStyleType: listStyle.listStyleType
+            }
+          };
+        })(),
+        devicePixelRatio: window.devicePixelRatio,
+        innerWidth: window.innerWidth,
+        innerHeight: window.innerHeight,
+        outerWidth: window.outerWidth,
+        outerHeight: window.outerHeight
+      };
+      const raw = JSON.stringify(data, null, 2);
+      return { raw, hash: hashString(raw) };
+    }
+
+    function renderCssRenderingFingerprint() {
+      const fingerprint = getCssRenderingFingerprint();
+      document.getElementById('result').innerHTML = `
+        <div class="section">
+          <div class="label">Hashli veri</div>
+          <pre>${fingerprint.hash}</pre>
+        </div>
+        <div class="section">
+          <div class="label">Ham veri</div>
+          <pre>${fingerprint.raw}</pre>
+        </div>
+      `;
+    }
+
+    document.getElementById('btn').addEventListener('click', renderCssRenderingFingerprint);
+    renderCssRenderingFingerprint();
+  </script>
+</body>
+</html>
