@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audio Fingerprint</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 24px; background: #f6f7fb; color: #111; }
+    button { padding: 10px 16px; border: 0; border-radius: 8px; background: #ea580c; color: white; cursor: pointer; font-size: 14px; }
+    #result { margin-top: 16px; padding: 12px; background: white; border: 1px solid #dbe2ea; border-radius: 8px; white-space: pre-wrap; word-break: break-all; }
+    .section { margin-top: 12px; }
+    .label { font-weight: 700; margin-bottom: 6px; }
+    pre { margin: 0; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; white-space: pre-wrap; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <h1>Audio Fingerprint</h1>
+  <button id="btn">Yenile</button>
+  <div id="result">Henüz oluşturulmadı.</div>
+
+  <script>
+    function hashString(text) {
+      let hash = 0;
+      for (let i = 0; i < text.length; i++) {
+        hash = ((hash << 5) - hash) + text.charCodeAt(i);
+        hash |= 0;
+      }
+      return String(hash);
+    }
+
+    async function getAudioFingerprint() {
+      const data = {
+        supported: !!(window.OfflineAudioContext || window.webkitOfflineAudioContext),
+        sampleRate: null,
+        oscillatorType: 'triangle',
+        compressorThreshold: null,
+        compressorKnee: null,
+        compressorRatio: null,
+        compressorReduction: null,
+        analyserBins: null,
+        error: null
+      };
+
+      const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+      if (!OfflineCtx) {
+        const raw = JSON.stringify(data, null, 2);
+        return { raw, hash: hashString(raw) };
+      }
+
+      try {
+        const audioContext = new OfflineCtx(1, 44100, 44100);
+        data.sampleRate = audioContext.sampleRate;
+
+        const oscillator = audioContext.createOscillator();
+        oscillator.type = data.oscillatorType;
+        oscillator.frequency.value = 10000;
+
+        const compressor = audioContext.createDynamicsCompressor();
+        data.compressorThreshold = compressor.threshold.value;
+        data.compressorKnee = compressor.knee.value;
+        data.compressorRatio = compressor.ratio.value;
+        data.compressorReduction = compressor.reduction.value;
+
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 2048;
+
+        oscillator.connect(compressor);
+        compressor.connect(analyser);
+        analyser.connect(audioContext.destination);
+
+        oscillator.start(0);
+        const rendered = await audioContext.startRendering();
+        const channelData = rendered.getChannelData(0);
+        const slice = Array.from(channelData.slice(4500, 4600)).map((value) => Number(value.toFixed(8)));
+        data.analyserBins = slice;
+      } catch (error) {
+        data.error = String(error);
+      }
+
+      const raw = JSON.stringify(data, null, 2);
+      return { raw, hash: hashString(raw) };
+    }
+
+    async function renderAudioFingerprint() {
+      const fingerprint = await getAudioFingerprint();
+      document.getElementById('result').innerHTML = `
+        <div class="section">
+          <div class="label">Hashli veri</div>
+          <pre>${fingerprint.hash}</pre>
+        </div>
+        <div class="section">
+          <div class="label">Ham veri</div>
+          <pre>${fingerprint.raw}</pre>
+        </div>
+      `;
+    }
+
+    document.getElementById('btn').addEventListener('click', renderAudioFingerprint);
+    renderAudioFingerprint();
+  </script>
+</body>
+</html>
