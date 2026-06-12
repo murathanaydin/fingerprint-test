@@ -32,6 +32,25 @@
 			white-space: pre-wrap;
 		}
 
+		.section {
+			margin-top: 12px;
+		}
+
+		.label {
+			font-weight: 700;
+			margin-bottom: 6px;
+		}
+
+		pre {
+			margin: 0;
+			padding: 10px;
+			background: #f8fafc;
+			border: 1px solid #e2e8f0;
+			border-radius: 6px;
+			white-space: pre-wrap;
+			word-break: break-all;
+		}
+
 		canvas {
 			display: none;
 		}
@@ -69,13 +88,37 @@
 			const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
 			const maxCubeMapTextureSize = gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE);
 
-			const data = [vendor, renderer, version, shadingLanguage, maxTextureSize, maxCubeMapTextureSize].join(' | ');
-			return 'WebGL Fingerprint: ' + hashString(data) + '\n\n' + data;
+			const raw = [
+				`vendor: ${vendor}`,
+				`renderer: ${renderer}`,
+				`version: ${version}`,
+				`shadingLanguage: ${shadingLanguage}`,
+				`maxTextureSize: ${maxTextureSize}`,
+				`maxCubeMapTextureSize: ${maxCubeMapTextureSize}`
+			].join('\n');
+			const hash = hashString(raw);
+			return { raw, hash };
+		}
+
+		function renderWebGLFingerprint() {
+			const fingerprint = getWebGLFingerprint();
+			document.getElementById('result').innerHTML = `
+				<div class="section">
+					<div class="label">Hashli veri</div>
+					<pre>${fingerprint.hash}</pre>
+				</div>
+				<div class="section">
+					<div class="label">Ham veri</div>
+					<pre>${fingerprint.raw}</pre>
+				</div>
+			`;
 		}
 
 		document.getElementById('btn').addEventListener('click', () => {
-			document.getElementById('result').textContent = getWebGLFingerprint();
+			renderWebGLFingerprint();
 		});
+
+		renderWebGLFingerprint();
 	</script>
 </body>
 </html>

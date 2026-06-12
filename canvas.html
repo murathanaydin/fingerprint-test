@@ -29,6 +29,26 @@
 			border: 1px solid #dbe2ea;
 			border-radius: 8px;
 			word-break: break-all;
+			white-space: pre-wrap;
+		}
+
+		.section {
+			margin-top: 12px;
+		}
+
+		.label {
+			font-weight: 700;
+			margin-bottom: 6px;
+		}
+
+		pre {
+			margin: 0;
+			padding: 10px;
+			background: #f8fafc;
+			border: 1px solid #e2e8f0;
+			border-radius: 6px;
+			white-space: pre-wrap;
+			word-break: break-all;
 		}
 
 		canvas {
@@ -67,15 +87,30 @@
 			ctx.arc(220, 60, 30, 0, Math.PI * 2);
 			ctx.stroke();
 
-			const data = canvas.toDataURL();
-			//return hashString(data);
-            return data;
+			const raw = canvas.toDataURL();
+			const hash = hashString(raw);
+			return { raw, hash };
+		}
+
+		function renderCanvasFingerprint() {
+			const fingerprint = getCanvasFingerprint();
+			document.getElementById('result').innerHTML = `
+				<div class="section">
+					<div class="label">Hashli veri</div>
+					<pre>${fingerprint.hash}</pre>
+				</div>
+				<div class="section">
+					<div class="label">Ham veri</div>
+					<pre>${fingerprint.raw}</pre>
+				</div>
+			`;
 		}
 
 		document.getElementById('btn').addEventListener('click', () => {
-			const fingerprint = getCanvasFingerprint();
-			document.getElementById('result').textContent = 'Canvas Fingerprint: ' + fingerprint;
+			renderCanvasFingerprint();
 		});
+
+		renderCanvasFingerprint();
 	</script>
 </body>
 </html>
