@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="tr">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>WebGL Fingerprint</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			padding: 24px;
+			background: #f4f7fb;
+			color: #111;
+		}
+
+		button {
+			padding: 10px 16px;
+			border: 0;
+			border-radius: 8px;
+			background: #0f766e;
+			color: white;
+			cursor: pointer;
+			font-size: 14px;
+		}
+
+		#result {
+			margin-top: 16px;
+			padding: 12px;
+			background: white;
+			border: 1px solid #d6dde6;
+			border-radius: 8px;
+			word-break: break-all;
+			white-space: pre-wrap;
+		}
+
+		canvas {
+			display: none;
+		}
+	</style>
+</head>
+<body>
+	<h1>WebGL Fingerprint</h1>
+	<button id="btn">Fingerprint Oluştur</button>
+	<div id="result">Henüz oluşturulmadı.</div>
+	<canvas id="glCanvas" width="1" height="1"></canvas>
+
+	<script>
+		function hashString(text) {
+			let hash = 0;
+			for (let i = 0; i < text.length; i++) {
+				hash = ((hash << 5) - hash) + text.charCodeAt(i);
+				hash |= 0;
+			}
+			return String(hash);
+		}
+
+		function getWebGLFingerprint() {
+			const canvas = document.getElementById('glCanvas');
+			const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+
+			if (!gl) {
+				return 'WebGL desteklenmiyor';
+			}
+
+			const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+			const vendor = debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR);
+			const renderer = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+			const version = gl.getParameter(gl.VERSION);
+			const shadingLanguage = gl.getParameter(gl.SHADING_LANGUAGE_VERSION);
+			const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+			const maxCubeMapTextureSize = gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE);
+
+			const data = [vendor, renderer, version, shadingLanguage, maxTextureSize, maxCubeMapTextureSize].join(' | ');
+			return 'WebGL Fingerprint: ' + hashString(data) + '\n\n' + data;
+		}
+
+		document.getElementById('btn').addEventListener('click', () => {
+			document.getElementById('result').textContent = getWebGLFingerprint();
+		});
+	</script>
+</body>
+</html>
