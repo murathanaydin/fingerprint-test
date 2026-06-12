@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="tr">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Canvas Fingerprint</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			padding: 24px;
+			background: #f6f7fb;
+			color: #111;
+		}
+
+		button {
+			padding: 10px 16px;
+			border: 0;
+			border-radius: 8px;
+			background: #2563eb;
+			color: white;
+			cursor: pointer;
+			font-size: 14px;
+		}
+
+		#result {
+			margin-top: 16px;
+			padding: 12px;
+			background: white;
+			border: 1px solid #dbe2ea;
+			border-radius: 8px;
+			word-break: break-all;
+		}
+
+		canvas {
+			display: none;
+		}
+	</style>
+</head>
+<body>
+	<h1>Canvas Fingerprint</h1>
+	<button id="btn">Fingerprint Oluştur</button>
+	<div id="result">Henüz oluşturulmadı.</div>
+	<canvas id="canvas" width="300" height="120"></canvas>
+
+	<script>
+		function hashString(text) {
+			let hash = 0;
+			for (let i = 0; i < text.length; i++) {
+				hash = ((hash << 5) - hash) + text.charCodeAt(i);
+				hash |= 0;
+			}
+			return String(hash);
+		}
+
+		function getCanvasFingerprint() {
+			const canvas = document.getElementById('canvas');
+			const ctx = canvas.getContext('2d');
+
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			ctx.fillStyle = '#f60';
+			ctx.fillRect(10, 10, 100, 50);
+			ctx.fillStyle = '#069';
+			ctx.font = '20px Arial';
+			ctx.fillText('Canvas Fingerprint', 20, 80);
+			ctx.strokeStyle = 'rgba(0, 0, 255, 0.5)';
+			ctx.beginPath();
+			ctx.arc(220, 60, 30, 0, Math.PI * 2);
+			ctx.stroke();
+
+			const data = canvas.toDataURL();
+			//return hashString(data);
+            return data;
+		}
+
+		document.getElementById('btn').addEventListener('click', () => {
+			const fingerprint = getCanvasFingerprint();
+			document.getElementById('result').textContent = 'Canvas Fingerprint: ' + fingerprint;
+		});
+	</script>
+</body>
+</html>
